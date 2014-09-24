@@ -74,11 +74,8 @@ class ErrorParser(object):
         return out
 
 
-# TODO:
-# - only if match server name
-# - filename/line number/function name of last item in traceback
-# - read email from stdin
-# - ...
+# TODO: only if match server name
+# TODO: filename/line number/function name of last item in traceback
 @click.command()
 @click.option('--max-len', '-m', default=80, help='Maximum length of returned string')
 @click.option('--server-name', '-s', is_flag=True, help='Include the URL server name')
