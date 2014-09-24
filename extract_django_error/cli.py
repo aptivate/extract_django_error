@@ -24,7 +24,7 @@ def find_line_matching(lines, re_string, start_line=0):
     return None
 
 
-class ErrorParser(object):
+class ErrorEmailParser(object):
 
     def parse_email(self, msg_file):
         self.parsed_email = Parser().parse(msg_file)
@@ -81,6 +81,6 @@ class ErrorParser(object):
 def main(files, max_len, server_name, path, query):
     """Extracts details of errors from Django error emails"""
     for msg_file in files:
-        parser = ErrorParser()
+        parser = ErrorEmailParser()
         parser.parse_email(msg_file)
         click.echo(parser.assemble_output(max_len, server_name, path, query))
