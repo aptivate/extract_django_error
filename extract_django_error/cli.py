@@ -73,12 +73,12 @@ class ErrorParser(object):
             out = out[:max_len]
         return out
 
-"""    --max-len=LEN     Maximum length of returned string [default: 80]
-    -s --server-name  Include the URL server name
-    -p --path         Include the URL path
-    -q --query        Include the URL query string"""
 
-
+# TODO:
+# - only if match server name
+# - filename/line number/function name of last item in traceback
+# - read email from stdin
+# - ...
 @click.command()
 @click.option('--max-len', '-m', default=80, help='Maximum length of returned string')
 @click.option('--server-name', '-s', is_flag=True, help='Include the URL server name')
