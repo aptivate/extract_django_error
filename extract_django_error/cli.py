@@ -26,15 +26,11 @@ def find_line_matching(lines, re_string, start_line=0):
 
 class ErrorParser(object):
 
-    def __init__(self, msg_file):
-        self.msg_file = msg_file
-        self.parse_email()
-
-    def parse_email(self):
-        self.parsed_email = Parser().parse(self.msg_file)
+    def parse_email(self, msg_file):
+        self.parsed_email = Parser().parse(msg_file)
         email_parts = [p for p in self.parsed_email.walk()]
         if len(email_parts) > 1:
-            raise Exception("unexpected parts to email %s" % self.msg_file)
+            raise Exception("unexpected parts to email: %s" % msg_file.name)
         self.body = email_parts[0].get_payload()
         traceback, request = self.body.split("\n\n\n", 1)
         self.parse_traceback(traceback)
@@ -85,5 +81,6 @@ class ErrorParser(object):
 def main(files, max_len, server_name, path, query):
     """Extracts details of errors from Django error emails"""
     for msg_file in files:
-        parser = ErrorParser(msg_file)
+        parser = ErrorParser()
+        parser.parse_email(msg_file)
         click.echo(parser.assemble_output(max_len, server_name, path, query))
