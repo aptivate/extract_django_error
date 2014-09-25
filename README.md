@@ -33,6 +33,8 @@ You can also pipe an email directly into the command, eg:
     $ cat path/to/email | extract_django_error -
 
 Note the `-` at the end of the error to make the command read the email from stdin.
+Not so useful when just using `cat` but could be used to pipe in emails from procmail
+or other scripts.
 
 ## Options
 
