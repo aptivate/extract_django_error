@@ -31,7 +31,7 @@ class ErrorEmailParser(object):
         email_parts = [p for p in self.parsed_email.walk()]
         if len(email_parts) > 1:
             raise Exception("unexpected parts to email: %s" % msg_file.name)
-        self.body = email_parts[0].get_payload()
+        self.body = self.parsed_email.get_payload(decode=True)
         traceback, request = self.body.split("\n\n\n", 1)
         self.parse_traceback(traceback)
         self.parse_request(request)
@@ -40,9 +40,11 @@ class ErrorEmailParser(object):
         tb_lines = traceback.split("\n")
         self.one_line_error = tb_lines[-1]
         matches = file_line_re.match(tb_lines[-4])
-        self.tb_final_path = matches.group("path")
-        self.tb_final_line_no = matches.group("line_no")
-        self.tb_final_function = matches.group("function")
+        # TODO: nice way to report the error
+        if matches:
+            self.tb_final_path = matches.group("path")
+            self.tb_final_line_no = matches.group("line_no")
+            self.tb_final_function = matches.group("function")
 
     def parse_request(self, request):
         request_lines = request.split("\n")
@@ -53,16 +55,22 @@ class ErrorEmailParser(object):
         meta_end = find_line_matching(request_lines, r'\}>$') + 1
         meta_lines = [l for l in request_lines[meta_start:meta_end] if not l.endswith(">,")]
         meta_text = "\n".join(meta_lines)[5:-1]
-        self.meta = ast.literal_eval(meta_text)
+        try:
+            self.meta = ast.literal_eval(meta_text)
+        except SyntaxError as e:
+            # TODO: better error handling/reporting
+            self.meta = {}
+            #click.echo("could not parse:\n%s" % meta_text, err=True)
+            #raise
 
     def assemble_output(self, max_len, server_name, path, query):
         bits = []
         if server_name:
-            bits.append(self.meta["SERVER_NAME"])
+            bits.append(self.meta.get("SERVER_NAME", "unknown"))
         if path:
-            bits.append(self.meta["PATH_INFO"])
+            bits.append(self.meta.get("PATH_INFO", "unknown"))
         if query:
-            bits.append(self.meta["QUERY_STRING"])
+            bits.append(self.meta.get("QUERY_STRING", "unknown"))
         bits.append(self.one_line_error)
         out = " ".join(bits)
         if max_len > 0:
