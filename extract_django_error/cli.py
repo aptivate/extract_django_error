@@ -26,6 +26,9 @@ def find_line_matching(lines, re_string, start_line=0):
 
 class ErrorEmailParser(object):
 
+    def __init__(self, verbose):
+        self.verbose = verbose
+
     def parse_email(self, msg_file):
         self.parsed_email = Parser().parse(msg_file)
         email_parts = [p for p in self.parsed_email.walk()]
@@ -57,10 +60,11 @@ class ErrorEmailParser(object):
         meta_text = "\n".join(meta_lines)[5:-1]
         try:
             self.meta = ast.literal_eval(meta_text)
-        except SyntaxError as e:
+        except SyntaxError:
             # TODO: better error handling/reporting
             self.meta = {}
-            #click.echo("could not parse:\n%s" % meta_text, err=True)
+            if self.verbose:
+                click.echo("could not parse:\n%s" % meta_text, err=True)
             #raise
 
     def assemble_output(self, max_len, server_name, path, query):
@@ -85,10 +89,11 @@ class ErrorEmailParser(object):
 @click.option('--server-name', '-s', is_flag=True, help='Include the URL server name')
 @click.option('--path', '-p', is_flag=True, help='Include the URL path')
 @click.option('--query', '-q', is_flag=True, help='Include the URL query string')
+@click.option('--verbose', '-v', is_flag=True, help='Verbose errors')
 @click.argument('files', nargs=-1, type=click.File(mode="rb"))
-def main(files, max_len, server_name, path, query):
+def main(files, max_len, server_name, path, query, verbose):
     """Extracts details of errors from Django error emails"""
     for msg_file in files:
-        parser = ErrorEmailParser()
+        parser = ErrorEmailParser(verbose)
         parser.parse_email(msg_file)
         click.echo(parser.assemble_output(max_len, server_name, path, query))
