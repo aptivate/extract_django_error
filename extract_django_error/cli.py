@@ -42,6 +42,7 @@ class ErrorEmailParser(object):
     def parse_traceback(self, traceback):
         tb_lines = traceback.split("\n")
         self.one_line_error = tb_lines[-1]
+        self.one_word_error = self.one_line_error.split(':', 1)[0]
         matches = file_line_re.match(tb_lines[-4])
         # TODO: nice way to report the error
         if matches:
@@ -67,7 +68,7 @@ class ErrorEmailParser(object):
                 click.echo("could not parse:\n%s" % meta_text, err=True)
             #raise
 
-    def assemble_output(self, max_len, server_name, path, query):
+    def assemble_output(self, max_len, one_word, server_name, path, query):
         bits = []
         if server_name:
             bits.append(self.meta.get("SERVER_NAME", "unknown"))
@@ -75,7 +76,10 @@ class ErrorEmailParser(object):
             bits.append(self.meta.get("PATH_INFO", "unknown"))
         if query:
             bits.append(self.meta.get("QUERY_STRING", "unknown"))
-        bits.append(self.one_line_error)
+        if one_word:
+            bits.append(self.one_word_error)
+        else:
+            bits.append(self.one_line_error)
         out = " ".join(bits)
         if max_len > 0:
             out = out[:max_len]
@@ -86,14 +90,15 @@ class ErrorEmailParser(object):
 # TODO: filename/line number/function name of last item in traceback
 @click.command()
 @click.option('--max-len', '-m', default=80, help='Maximum length of returned string')
+@click.option('--one-word', '-o', is_flag=True, help='One word exception')
 @click.option('--server-name', '-s', is_flag=True, help='Include the URL server name')
 @click.option('--path', '-p', is_flag=True, help='Include the URL path')
 @click.option('--query', '-q', is_flag=True, help='Include the URL query string')
 @click.option('--verbose', '-v', is_flag=True, help='Verbose errors')
 @click.argument('files', nargs=-1, type=click.File(mode="rb"))
-def main(files, max_len, server_name, path, query, verbose):
+def main(files, max_len, one_word, server_name, path, query, verbose):
     """Extracts details of errors from Django error emails"""
     for msg_file in files:
         parser = ErrorEmailParser(verbose)
         parser.parse_email(msg_file)
-        click.echo(parser.assemble_output(max_len, server_name, path, query))
+        click.echo(parser.assemble_output(max_len, one_word, server_name, path, query))
